@@ -1,0 +1,6 @@
+# okf:begin — managed by okf-repo-setup: parallel branches merge the bundle without conflicts
+# (concepts: scripts/okf/merge_driver.py, set up per clone by the SessionStart hook)
+okf-bundle/**/*.md merge=okf
+okf-bundle/log.md merge=union
+okf-bundle/.okf-anchor merge=union
+# okf:end

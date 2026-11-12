@@ -1,0 +1,10 @@
+{
+  "name": "okf",
+  "version": "1.0.0",
+  "author": {
+    "name": "NobodyLabs"
+  },
+  "description": "OKF-бандл знаний о проекте для агентов и новых инженеров: написать, обновить, проверить (скилл okf) и не дать отстать от кода — Stop-хук, гейт в CI, драйвер слияния, стражник, MCP-сервер по бандлу для заказчика (скилл okf-repo-setup)",
+  "license": "MIT",
+  "keywords": ["okf", "knowledge", "documentation", "agents", "mcp", "hooks"]
+}

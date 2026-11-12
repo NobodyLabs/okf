@@ -1,0 +1,11 @@
+# Per-Dockerfile ignore (BuildKit): takes precedence over the repo-root
+# .dockerignore, which excludes this service from the main app's image.
+# Build context is the repo root; send only what this image needs.
+*
+!__MCP_DIR__/package.json
+!__MCP_DIR__/package-lock.json
+!__MCP_DIR__/tsconfig.json
+!__MCP_DIR__/tsup.config.ts
+!__MCP_DIR__/src
+__MCP_DIR__/src/**/*.test.ts
+!okf-bundle

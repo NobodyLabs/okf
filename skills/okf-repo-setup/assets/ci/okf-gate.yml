@@ -1,0 +1,43 @@
+name: OKF gate
+
+# Долг ветки перед okf-bundle/: концепты, чей код ветка поменяла, а сами они не обновлены.
+# То же правило, что у Stop-хука, но для всех коммитов — с GitHub, руками, из других агентов.
+# Без paths: долг рождается правкой кода. Отказ — строка `okf: n/a — <причина>` в коммите
+# или метка okf-not-affected на PR. Ставит install.py скилла okf-repo-setup.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [__OKF_BRANCH__]   # интеграционная ветка — прямые пуши без PR
+
+permissions:
+  contents: read
+
+jobs:
+  drift-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # merge-base и сообщения коммитов ветки
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: drift.py --gate
+        env:
+          OKF_NOT_AFFECTED: ${{ contains(github.event.pull_request.labels.*.name, 'okf-not-affected') && '1' || '0' }}
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: |
+          if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo "::notice::нет базы $BASE (новая ветка или force-push) — сравнивать не с чем"
+            exit 0
+          fi
+          set +e
+          python3 scripts/okf/drift.py --gate --branch "$BASE" > gate.txt 2>&1
+          code=$?
+          set -e
+          cat gate.txt
+          { echo '### OKF gate'; echo; echo '```'; cat gate.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$code"

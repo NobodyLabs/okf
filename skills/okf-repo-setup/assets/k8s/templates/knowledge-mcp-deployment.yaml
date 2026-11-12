@@ -1,0 +1,95 @@
+{{- if .Values.knowledgeMcp.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "<chart>.fullname" . }}-knowledge-mcp
+  labels:
+    {{- include "<chart>.knowledgeMcp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.knowledgeMcp.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "<chart>.knowledgeMcp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "<chart>.knowledgeMcp.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "<chart>.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: knowledge-mcp
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.knowledgeMcp.image.repository }}:{{ .Values.knowledgeMcp.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.knowledgeMcp.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8474
+              protocol: TCP
+          env:
+            {{- range .Values.knowledgeMcp.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: PORT
+              value: "8474"
+            # Ни API_BASE_URL, ни доступа к БД — намеренно: сервер отвечает только
+            # из okf-bundle, вшитого в образ.
+            # Токены — из секрета приложения (Vault/ESO или ручной — имя одно, secret.name).
+            # Без партнёрского токена сервер падает на старте — это намеренно.
+            - name: MCP_PARTNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: KNOWLEDGE_MCP_PARTNER_TOKEN
+                  optional: true
+            - name: MCP_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: KNOWLEDGE_MCP_INTERNAL_TOKEN
+                  optional: true
+            # Клиентская аудитория (урезанный продуктовый срез). Не задан — не читает никто.
+            - name: MCP_CLIENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: KNOWLEDGE_MCP_CLIENT_TOKEN
+                  optional: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.knowledgeMcp.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -1,0 +1,17 @@
+{{- if .Values.knowledgeMcp.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "<chart>.knowledgeMcp.serviceName" . }}
+  labels:
+    {{- include "<chart>.knowledgeMcp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "<chart>.knowledgeMcp.selectorLabels" . | nindent 4 }}
+{{- end }}

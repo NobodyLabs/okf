@@ -1,0 +1,38 @@
+{{- /*
+Публичный вход: сюда подключается ИИ-агент заказчика. Доступ контролирует bearer-токен
+в самом приложении. Настройки — в knowledgeMcp.ingress, чтобы шаблон не зависел от
+общего блока ingress чарта (его может и не быть).
+*/ -}}
+{{- if and .Values.knowledgeMcp.enabled .Values.knowledgeMcp.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "<chart>.fullname" . }}-knowledge-mcp
+  labels:
+    {{- include "<chart>.knowledgeMcp.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # Streamable HTTP: без этих четырёх ответы режутся или копятся в буфере.
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: {{ .Values.knowledgeMcp.ingress.className | default "nginx" }}
+  tls:
+    - hosts:
+        - {{ .Values.knowledgeMcp.ingress.host }}
+      secretName: {{ .Values.knowledgeMcp.ingress.tlsSecretName }}
+  rules:
+    - host: {{ .Values.knowledgeMcp.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "<chart>.knowledgeMcp.serviceName" . }}
+                port:
+                  number: 80
+{{- end }}

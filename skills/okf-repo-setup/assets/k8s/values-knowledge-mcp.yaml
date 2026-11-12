@@ -1,0 +1,36 @@
+# knowledge-mcp: блоки values для чарта <chart> (приложение <app>).
+#
+# 1) В values.yaml — секция верхнего уровня. На имя knowledgeMcp опираются шаблоны; если
+#    CI правит тег образа в values, он ищет knowledgeMcp.image.tag.
+knowledgeMcp:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: <registry>/<app>-knowledge-mcp
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 150m
+      memory: 192Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+  env: []
+  ingress:
+    enabled: true
+    className: nginx
+    host: <app>-kb-mcp.<domain>
+    tlsSecretName: <app>-kb-mcp-tls
+
+# 2) В environments/values-dev.yaml (и так же values-prod.yaml со своими хостом и тегом).
+#    Включай, только когда в реестре есть образ и в секрете лежит
+#    KNOWLEDGE_MCP_PARTNER_TOKEN, — иначе под висит в ImagePullBackOff/CrashLoop.
+#
+# knowledgeMcp:
+#   enabled: true
+#   image:
+#     tag: develop-0000000  # Updated by CI/CD
+#   ingress:
+#     host: <app>-kb-mcp-dev.<domain>
+#     tlsSecretName: <app>-kb-mcp-dev-tls
