@@ -20,8 +20,18 @@ claude plugin marketplace add NobodyLabs/okf
 claude plugin install okf@okf
 ```
 
-Дальше в сессии: «задокументируй проект для агентов» (скилл `okf`) или «настрой okf в
-репозитории, чтобы бандл не отставал от кода» (скилл `okf-repo-setup`).
+Скиллы появятся со следующей сессии: после установки перезапусти Claude Code.
+
+Дальше в сессии, открытой в корне проекта: «задокументируй проект для агентов» (скилл
+`okf`) или «настрой okf в репозитории, чтобы бандл не отставал от кода» (скилл
+`okf-repo-setup`). Явно — `/okf:okf` и `/okf:okf-repo-setup`.
+
+Обновление:
+
+```bash
+claude plugin marketplace update okf
+claude plugin update okf@okf
+```
 
 ## Что ставит `okf-repo-setup`
 
